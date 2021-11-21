@@ -8,4 +8,4 @@ if __name__ == '__main__':
     for i in range(len(tickers)):
         df = yf.download(tickers[i],
                          period='10d')
-
+        print(df)
