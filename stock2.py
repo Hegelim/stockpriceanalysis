@@ -114,7 +114,7 @@ def make_prediction():
         pickle.dump(predictions, f)
 
 
-def make_models():
+def train_models():
     """Make Linear Regression Models. """
     with open(HISTORY_DIREC, 'rb') as f:
         histories_df = pickle.load(f)
