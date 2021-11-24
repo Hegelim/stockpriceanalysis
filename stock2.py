@@ -162,7 +162,7 @@ with DAG('stock',
          description='Stock Price Analysis for HW4',
          catchup=False,
          start_date=datetime(2021, 1, 1),
-         schedule_interval=timedelta(minutes=10)
+         schedule_interval='0 7 * * *',
          ) as dag:
     get_data_task = PythonOperator(task_id='get_data',
                                    python_callable=get_data)
