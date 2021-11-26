@@ -74,13 +74,118 @@ Here you can see that it successfully ran 3 times. The first run happened at 16:
 
 ## Q2.2
 
-### Q2.2 (1)
+#### Code Screenshots
 
-### Q2.2 (2) 
+![image-20211126105602345](C:\Users\thefi\AppData\Roaming\Typora\typora-user-images\image-20211126105602345.png)
 
-### Q2.2 (3)
+![image-20211126105637169](C:\Users\thefi\AppData\Roaming\Typora\typora-user-images\image-20211126105637169.png)
 
-### Q2.2 (4)
+![image-20211126105705070](C:\Users\thefi\AppData\Roaming\Typora\typora-user-images\image-20211126105705070.png)
 
-### Q2.2 (5)
+![image-20211126105732914](C:\Users\thefi\AppData\Roaming\Typora\typora-user-images\image-20211126105732914.png)
+
+![image-20211126105756032](C:\Users\thefi\AppData\Roaming\Typora\typora-user-images\image-20211126105756032.png)
+
+![image-20211126105818391](C:\Users\thefi\AppData\Roaming\Typora\typora-user-images\image-20211126105818391.png)
+
+![image-20211126105838735](C:\Users\thefi\AppData\Roaming\Typora\typora-user-images\image-20211126105838735.png)
+
+![image-20211126105859325](C:\Users\thefi\AppData\Roaming\Typora\typora-user-images\image-20211126105859325.png)
+
+#### Design ideas
+
+* DAGs: I used five DAGs for this hw: 
+
+  ![image-20211126104551619](C:\Users\thefi\AppData\Roaming\Typora\typora-user-images\image-20211126104551619.png)
+
+  * get_data_task: retrieve past 10 days' stock data. 
+  * get_historical_data_task: retrieve all the historical data up to including yesterday. 
+  * train_model_task: train 5 linear regression models.
+  * make_prediction_task: make 5 predictions, save predictions to a list, save list to .pkl file. 
+  * compute_relative_error_task: compute 5 relative errors. 
+
+* Cross communication:
+
+  * Initially, I planned to use `task_instance.xcom_pull` and `task_instance.xcom_push` to pass my data between each DAG. However, after spending some time exploring stack overflow and looking up Apache documentation, I realized it is a bad idea to transfer big data between DAGs, so I resorted to just save data to files and read the files later. 
+  * In my code, you can see a lot of `with open()...` which are basically used to save pickle files to local directory. These files will then be read by downstream DAGs. 
+
+* How I set up the scheduler:
+
+  * basically, I set my `start_date=datetime(2021, 1, 1)` so that the scheduler will run immediately once I start the DAG run. 
+  * I then set `schedule_interval='0 7 * * *'` so then the scheduler will run at 7am every day. 
+
+* Workflow
+
+  * The DAGs hierarchy is in the code example.
+  * At the first run, I don't have a prediction.pkl and I don't have relative_errors.csv. Run all DAGs except compute_relative_error_task. 
+  * On the second run, now I have a prediction file but I don't have a relative_error.csv, so I create the csv file with the first set of relative errors.
+  * On all later runs, I have the prediction.pkl and I also have relative_errors.csv, so I can just update the csv. 
+
+#### Results 
+
+![image-20211126111040366](C:\Users\thefi\AppData\Roaming\Typora\typora-user-images\image-20211126111040366.png)
+
+![image-20211126111058169](C:\Users\thefi\AppData\Roaming\Typora\typora-user-images\image-20211126111058169.png)
+
+#### The csv file
+
+![image-20211126111128691](C:\Users\thefi\AppData\Roaming\Typora\typora-user-images\image-20211126111128691.png)
+
+#### Gantt
+
+![image-20211126111202192](C:\Users\thefi\AppData\Roaming\Typora\typora-user-images\image-20211126111202192.png)
+
+# Task 3 Written Parts
+
+## Q3.1 Answer the question (5 pts)
+### (1) What are the pros and cons of SequentialExecutor, LocalExecutor, CeleryExecutor, KubernetesExecutor? (10%)
+
+* SequentialExecutor
+  * Pros
+    * Light weighted.
+    * No need to set up. Comes as default.
+  * Cons
+    * Not ready for production.
+    * Not scalable.
+    * Not able to perform many tasks at once.
+* LocalExecutor
+  * Pros
+    * Straightforward and easy to set up.
+    * Offers parallelism.
+  * Cons
+    * Not scalable.
+    * Dependent on a single point of failure. 
+* CeleryExecutor
+  * Pros
+    * Allows for scalability.
+    * Celery is responsible for managing the workers. Celery creates a new one in the case of a failure.
+  * Cons
+    * Requires RabbitMQ/Redis for task queuing, which is redundant with what Airflow already supports.
+    * The setup is complicated due to the above mentioned dependencies.
+* KubernetesExecutor
+  * Pros
+    * Combines the benefits of CeleryExecutor and LocalExecutor in terms of scalability and simplicity. 
+    * Fine-grained control over task-allocation resources. At the task level, the amount of CPU/memory needed can be configured.
+  * Cons
+    * Kubernetes familiarity as a potential barrier to entry.
+    * Airflow is newer to Kubernetes, and the documentation is complicated.
+
+## Q3.2 Draw the DAG of your group project (10 pts)
+### (1) Formulate it into at least 5 tasks
+
+1. get_weather_task: retrieve the weather data. 
+2. get_twitter_task: retrieve the twitter data.
+3. data_cleaning_task: clean and combine the weather data and the twitter data.
+4. sentiment_task: do sentiment analysis on twitter data.
+5. prediction_task: predict sentiment analysis based on the weather data using regression models.
+
+### (2) Task names (functions) and their dependencies
+
+The hierarchy of the tasks could be formulated as follows:
+
+get_weather_task >> get_twitter_task >> data_cleaning_task >> sentiment_task >> prediction_task
+
+### (3) How do you schedule your tasks?
+
+Currently, we plan to schedule it at a certain time everyday (for instance, 10am) so that we could update our models once a day. 
 

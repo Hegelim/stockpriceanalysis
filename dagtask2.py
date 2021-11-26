@@ -8,6 +8,7 @@ from airflow import DAG
 # Operators; we need this to operate!
 from airflow.operators.bash import BashOperator
 from airflow.operators.python import PythonOperator
+
 # These args will get passed on to each operator
 # You can override them on a per-task basis during operator initialization
 default_args = {
@@ -33,12 +34,13 @@ default_args = {
     # 'trigger_rule': 'all_success'
 }
 
-
 count = 0
+
 
 def sleep_func():
     """This is a function that will run within the DAG execution"""
     time.sleep(1)
+
 
 def count_func():
     global count
@@ -46,22 +48,21 @@ def count_func():
     print('count_increase output: {}'.format(count))
     time.sleep(2)
 
+
 def print_func():
     print("Hello!")
 
 
 with DAG(
-    'hw4dag',
-    default_args=default_args,
-    description='HW4 Q2',
-    schedule_interval=timedelta(minutes=30),
-    start_date=datetime(2021, 1, 1),
-    catchup=False,
-    tags=['example'],
+        'hw4dag',
+        default_args=default_args,
+        description='HW4 Q2',
+        schedule_interval=timedelta(minutes=30),
+        start_date=datetime(2021, 1, 1),
+        catchup=False,
+        tags=['example'],
 ) as dag:
-
     # t* examples of tasks created by instantiating operators
-
 
     t1 = BashOperator(
         task_id='t1',
